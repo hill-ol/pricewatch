@@ -24,15 +24,18 @@ public class WatchedItem {
 
   private boolean alerted;
 
+  private String productUrl;
+
   protected WatchedItem() {
     // required by JPA
   }
 
-  public WatchedItem(String storeDomain, String variantId, String name, BigDecimal targetPrice) {
+  public WatchedItem(String storeDomain, String variantId, String name, BigDecimal targetPrice, String productUrl) {
     this.storeDomain = storeDomain;
     this.variantId = variantId;
     this.name = name;
     this.targetPrice = targetPrice;
+    this.productUrl = productUrl;
   }
 
   public Long getId() {
@@ -53,6 +56,10 @@ public class WatchedItem {
 
   public BigDecimal getTargetPrice() {
     return targetPrice;
+  }
+
+  public String getProductUrl() {
+    return productUrl;
   }
 
   public void setTargetPrice(BigDecimal targetPrice) {
