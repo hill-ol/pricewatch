@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import type { WatchedItem } from './types'
-import ItemCard from './components/ItemCard'
+import type { NewItem, WatchedItem } from './types'
 import Header from './components/Header'
+import AddItemForm from './components/AddItemForm'
+import ItemCard from './components/ItemCard'
+import './App.css'
 
 function App() {
   const [items, setItems] = useState<WatchedItem[]>([])
@@ -11,6 +13,19 @@ function App() {
         .then((res) => res.json())
         .then(setItems)
   }, [])
+
+  async function handleAdd(newItem: NewItem) {
+    const res = await fetch('/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newItem),
+    })
+    if (!res.ok) {
+      throw new Error('Failed to add item')
+    }
+    const created: WatchedItem = await res.json()
+    setItems((prev) => [...prev, created])
+  }
 
   function handleDelete(id: number) {
     fetch(`/items/${id}`, { method: 'DELETE' }).then((res) => {
@@ -25,11 +40,14 @@ function App() {
   return (
       <>
         <Header monitoredCount={items.length} triggeredCount={triggeredCount} />
-        <main style={{ maxWidth: 720, margin: '0 auto', display: 'grid', gap: 16 }}>
-          {items.map((item) => (
-              <ItemCard key={item.id} item={item} onDelete={handleDelete} />
-          ))}
-        </main>
+        <div className="layout">
+          <AddItemForm onAdd={handleAdd} />
+          <section className="items">
+            {items.map((item) => (
+                <ItemCard key={item.id} item={item} onDelete={handleDelete} />
+            ))}
+          </section>
+        </div>
       </>
   )
 }

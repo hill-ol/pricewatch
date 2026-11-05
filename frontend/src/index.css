@@ -18,7 +18,7 @@
 
 body {
     margin: 0;
-    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-    background: #fdf8fb;
-    color: #111827;
+    font-family: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+    background: var(--color-background);
+    color: var(--color-text);
 }

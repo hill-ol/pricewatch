@@ -8,3 +8,11 @@ export type WatchedItem = {
     lastPrice: number | null
     alerted: boolean
 }
+
+export type NewItem = {
+    name: string
+    productUrl: string
+    storeDomain: string
+    variantId: string
+    targetPrice: number
+}
