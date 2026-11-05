@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { BellRing, Link2 } from 'lucide-react'
+import { BellRing, Link } from 'lucide-react'
 import type { NewItem } from '../types'
 import './AddItemForm.css'
 
@@ -64,9 +64,6 @@ function AddItemForm({ onAdd }: Props) {
     return (
         <form className="add-form" onSubmit={handleSubmit}>
             <div className="add-form__heading">
-        <span className="add-form__icon">
-          <Link2 size={18} />
-        </span>
                 <h2>Watch New Product</h2>
             </div>
             <p className="add-form__intro">
@@ -85,13 +82,16 @@ function AddItemForm({ onAdd }: Props) {
 
             <label className="field">
                 <span>Product URL</span>
-                <input
-                    required
-                    type="url"
-                    value={form.productUrl}
-                    onChange={(e) => update('productUrl', e.target.value)}
-                    placeholder="https://lolablankets.com/products/...?variant=..."
-                />
+                <div className="field__input-wrap">
+                    <Link size={16} className="field__icon" />
+                    <input
+                        required
+                        type="url"
+                        value={form.productUrl}
+                        onChange={(e) => update('productUrl', e.target.value)}
+                        placeholder="https://lolablankets.com/products/...?variant=..."
+                    />
+                </div>
             </label>
 
             <label className="field">

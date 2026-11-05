@@ -21,17 +21,6 @@
     margin: 0;
 }
 
-.add-form__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
-}
-
 .add-form__intro {
     font-size: 13px;
     color: var(--color-text-muted);
@@ -94,4 +83,23 @@
 .add-form__submit:disabled {
     opacity: 0.6;
     cursor: wait;
+}
+
+.field__input-wrap {
+    position: relative;
+    display: flex;
+}
+
+.field__input-wrap input {
+    flex: 1;
+    padding-left: 36px;
+}
+
+.field__icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a78bfa;
+    pointer-events: none;
 }
