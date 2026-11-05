@@ -3,8 +3,8 @@
     align-items: center;
     gap: 12px;
     padding: 16px 40px;
-    border-bottom: 1px solid #f1e4ec;
-    background: #fff;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
 }
 
 .topbar__logo {
@@ -14,8 +14,8 @@
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: #fce7f3;
-    color: #db2777;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
 }
 
 .topbar__title {
@@ -66,7 +66,7 @@
 .summary__chip--triggered {
     background: #fdf2f8;
     border-color: #fbcfe8;
-    color: #9d174d;
+    color: var(--color-accent-text);
 }
 
 .summary__label {

@@ -1,3 +1,17 @@
+:root {
+    --color-accent: #db2777;
+    --color-accent-hover: #be185d;
+    --color-accent-soft: #fce7f3;
+    --color-accent-text: #9d174d;
+
+    --color-text: #111827;
+    --color-text-muted: #6b7280;
+
+    --color-surface: #fff;
+    --color-background: #fdf8fb;
+    --color-border: #f1e4ec;
+}
+
 * {
     box-sizing: border-box;
 }
