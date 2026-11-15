@@ -44,19 +44,17 @@ function App() {
         <div className="layout">
           <AddItemForm onAdd={handleAdd} />
           <section className="items">
-            <section className="items">
-              {items.length === 0 ? (
-                  <div className="empty-state">
-                    <PackageOpen size={32} />
-                    <p className="empty-state__title">Nothing watched yet</p>
-                    <p>Add a product with the form to start tracking its price.</p>
-                  </div>
-              ) : (
-                  items.map((item) => (
-                      <ItemCard key={item.id} item={item} onDelete={handleDelete} />
-                  ))
-              )}
-            </section>
+            {items.length === 0 ? (
+                <div className="empty-state">
+                  <PackageOpen size={32} />
+                  <p className="empty-state__title">Nothing watched yet</p>
+                  <p>Add a product with the form to start tracking its price.</p>
+                </div>
+            ) : (
+                items.map((item) => (
+                    <ItemCard key={item.id} item={item} onDelete={handleDelete} />
+                ))
+            )}
           </section>
         </div>
       </>

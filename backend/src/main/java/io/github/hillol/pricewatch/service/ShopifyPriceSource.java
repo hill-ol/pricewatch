@@ -24,7 +24,11 @@ public class ShopifyPriceSource implements PriceSource {
   private final RestClient restClient;
 
   public ShopifyPriceSource() {
-    this.restClient = RestClient.create();
+    this(RestClient.create());
+  }
+
+  ShopifyPriceSource(RestClient restClient) {
+    this.restClient = restClient;
   }
 
   @Override
