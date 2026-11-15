@@ -1,5 +1,7 @@
 # PriceWatch
 
+[![CI](https://github.com/hill-ol/pricewatch/actions/workflows/ci.yml/badge.svg)](https://github.com/hill-ol/pricewatch/actions/workflows/ci.yml)
+
 A self-hosted price tracker for Shopify stores. Paste a product link, set a target price, and PriceWatch checks the price on a schedule and emails you when it drops to your target or below.
 
 ![PriceWatch dashboard](docs/screenshot.png)
