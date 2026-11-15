@@ -4,6 +4,7 @@ import Header from './components/Header'
 import AddItemForm from './components/AddItemForm'
 import ItemCard from './components/ItemCard'
 import './App.css'
+import {PackageOpen} from "lucide-react";
 
 function App() {
   const [items, setItems] = useState<WatchedItem[]>([])
@@ -43,9 +44,19 @@ function App() {
         <div className="layout">
           <AddItemForm onAdd={handleAdd} />
           <section className="items">
-            {items.map((item) => (
-                <ItemCard key={item.id} item={item} onDelete={handleDelete} />
-            ))}
+            <section className="items">
+              {items.length === 0 ? (
+                  <div className="empty-state">
+                    <PackageOpen size={32} />
+                    <p className="empty-state__title">Nothing watched yet</p>
+                    <p>Add a product with the form to start tracking its price.</p>
+                  </div>
+              ) : (
+                  items.map((item) => (
+                      <ItemCard key={item.id} item={item} onDelete={handleDelete} />
+                  ))
+              )}
+            </section>
           </section>
         </div>
       </>
