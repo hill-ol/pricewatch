@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import type { MouseEvent } from 'react'
 import type { WatchedItem } from '../types'
 import { money } from '../format'
+import { itemStatus } from '../itemStatus'
+import BuyLink from './BuyLink'
 import './ItemCard.css'
 import { ArrowDown, ArrowUpRight, ChevronRight, Trash2 } from 'lucide-react'
 
@@ -15,12 +18,13 @@ function stop(event: MouseEvent) {
 }
 
 function ItemCard({ item, onOpen, onDelete }: Props) {
+    const [confirmingRemove, setConfirmingRemove] = useState(false)
     const { lastPrice, targetPrice } = item
-    const status = lastPrice === null ? 'pending' : item.alerted ? 'alerted' : 'watching'
+    const status = itemStatus(item)
     const variantNumber = item.variantId.split('/').pop()
 
     let badgeText = 'Pending first check'
-    if (status === 'alerted') badgeText = 'Alert sent'
+    if (status === 'at-target') badgeText = item.alerted ? 'Alert sent' : 'At target · email not sent'
     if (status === 'watching' && lastPrice !== null) {
         badgeText = `Watching (needs ${money.format(lastPrice - targetPrice)} drop)`
     }
@@ -29,17 +33,42 @@ function ItemCard({ item, onOpen, onDelete }: Props) {
         <article className={`item-card item-card--${status}`} onClick={() => onOpen(item.id)}>
             <div className="item-card__top">
                 <span className={`badge badge--${status}`}>{badgeText}</span>
-                <button
-                    className="item-card__delete"
-                    onClick={(event) => {
-                        stop(event)
-                        onDelete(item.id)
-                    }}
-                    aria-label={`Stop watching ${item.name}`}
-                >
-                    <Trash2 size={16} />
-                </button>
+                {!confirmingRemove && (
+                    <button
+                        className="item-card__delete"
+                        onClick={(event) => {
+                            stop(event)
+                            setConfirmingRemove(true)
+                        }}
+                        aria-label={`Remove ${item.name}`}
+                        title="Remove"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                )}
             </div>
+
+            {confirmingRemove && (
+                <div
+                    className="item-card__confirm"
+                    role="alertdialog"
+                    aria-label={`Confirm removing ${item.name}`}
+                    onClick={stop}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Escape') setConfirmingRemove(false)
+                    }}
+                >
+                    <span>Remove this item? Its price history will be deleted too.</span>
+                    <div className="item-card__confirm-actions">
+                        <button className="item-card__confirm-cancel" onClick={() => setConfirmingRemove(false)} autoFocus>
+                            Cancel
+                        </button>
+                        <button className="item-card__confirm-remove" onClick={() => onDelete(item.id)}>
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <a className="item-card__name" href={item.productUrl} target="_blank" rel="noreferrer" onClick={stop}>
                 {item.name}
@@ -59,10 +88,16 @@ function ItemCard({ item, onOpen, onDelete }: Props) {
                     ) : (
                         <span className="item-card__value">{money.format(lastPrice)}</span>
                     )}
-                    {status === 'alerted' && lastPrice !== null && (
+                    {status === 'at-target' && lastPrice !== null && (
                         <span className="item-card__drop">
-                            <ArrowDown size={12} />
-                            {money.format(targetPrice - lastPrice)} below target
+                            {lastPrice < targetPrice ? (
+                                <>
+                                    <ArrowDown size={12} />
+                                    {money.format(targetPrice - lastPrice)} below target
+                                </>
+                            ) : (
+                                'At your target'
+                            )}
                         </span>
                     )}
                 </div>
@@ -72,10 +107,8 @@ function ItemCard({ item, onOpen, onDelete }: Props) {
                     <span className="item-card__value item-card__value--target">{money.format(targetPrice)}</span>
                 </div>
 
-                {status === 'alerted' && (
-                    <a className="item-card__buy" href={item.productUrl} target="_blank" rel="noreferrer" onClick={stop}>
-                        Purchase
-                    </a>
+                {status === 'at-target' && (
+                    <BuyLink url={item.productUrl} className="item-card__buy" />
                 )}
             </div>
 

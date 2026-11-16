@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
-import { ArrowDown, ArrowUp, ArrowUpRight, Trash2, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpRight, ChevronDown, ChevronUp, X } from 'lucide-react'
 import type { PricePoint, WatchedItem } from '../types'
 import { dateTime, money, shortDate } from '../format'
+import { isAtTarget } from '../itemStatus'
+import BuyLink from './BuyLink'
 import PriceChart from './PriceChart'
 import './ItemDetails.css'
+
+const CHANGES_PREVIEW_COUNT = 5
 
 type Props = {
     item: WatchedItem
     onClose: () => void
-    onDelete: (id: number) => void
 }
 
 type PriceChange = {
@@ -29,10 +32,11 @@ function priceChanges(points: PricePoint[]): PriceChange[] {
     return changes.reverse()
 }
 
-function ItemDetails({ item, onClose, onDelete }: Props) {
+function ItemDetails({ item, onClose }: Props) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const [points, setPoints] = useState<PricePoint[] | null>(null)
     const [failed, setFailed] = useState(false)
+    const [showAllChanges, setShowAllChanges] = useState(false)
 
     useEffect(() => {
         const dialog = dialogRef.current
@@ -59,14 +63,11 @@ function ItemDetails({ item, onClose, onDelete }: Props) {
         if (event.target === event.currentTarget) close()
     }
 
-    function handleDelete() {
-        onDelete(item.id)
-        close()
-    }
-
     const lowest = points?.length ? points.reduce((a, b) => (b.price < a.price ? b : a)) : null
     const highest = points?.length ? points.reduce((a, b) => (b.price > a.price ? b : a)) : null
     const changes = points ? priceChanges(points) : []
+    const hiddenChangeCount = changes.length - CHANGES_PREVIEW_COUNT
+    const visibleChanges = showAllChanges ? changes : changes.slice(0, CHANGES_PREVIEW_COUNT)
 
     return (
         <dialog
@@ -137,7 +138,7 @@ function ItemDetails({ item, onClose, onDelete }: Props) {
                     <section className="details__section">
                         <h3>Price changes</h3>
                         <ul className="details__changes">
-                            {changes.slice(0, 10).map(({ point, delta }) => (
+                            {visibleChanges.map(({ point, delta }) => (
                                 <li key={point.checkedAt}>
                                     <span className="details__change-date">{dateTime.format(new Date(point.checkedAt))}</span>
                                     <span className="details__change-price">{money.format(point.price)}</span>
@@ -152,22 +153,27 @@ function ItemDetails({ item, onClose, onDelete }: Props) {
                                 </li>
                             ))}
                         </ul>
+                        {hiddenChangeCount > 0 && (
+                            <button
+                                className="details__show-all"
+                                onClick={() => setShowAllChanges((shown) => !shown)}
+                                aria-expanded={showAllChanges}
+                            >
+                                {showAllChanges ? 'Show fewer' : `Show all ${changes.length} changes`}
+                                {showAllChanges ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                        )}
                         {changes.length === 1 && (
                             <p className="details__sub">No price changes since tracking started.</p>
                         )}
                     </section>
                 )}
 
-                <footer className="details__footer">
-                    <button className="details__delete" onClick={handleDelete}>
-                        <Trash2 size={16} /> Stop watching
-                    </button>
-                    {item.alerted && (
-                        <a className="details__buy" href={item.productUrl} target="_blank" rel="noreferrer">
-                            Purchase
-                        </a>
-                    )}
-                </footer>
+                {isAtTarget(item) && (
+                    <footer className="details__footer">
+                        <BuyLink url={item.productUrl} />
+                    </footer>
+                )}
             </div>
         </dialog>
     )

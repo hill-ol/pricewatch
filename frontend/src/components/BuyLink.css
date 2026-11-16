@@ -1,0 +1,12 @@
+.buy-link {
+    background: var(--color-accent);
+    color: var(--color-surface);
+    font-size: 14px;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+}
+
+.buy-link:hover {
+    background: var(--color-accent-hover);
+}

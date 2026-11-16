@@ -4,6 +4,7 @@ import Header from './components/Header'
 import AddItemForm from './components/AddItemForm'
 import ItemCard from './components/ItemCard'
 import ItemDetails from './components/ItemDetails'
+import { isAtTarget } from './itemStatus'
 import './App.css'
 import { CircleAlert, LoaderCircle, PackageOpen } from 'lucide-react'
 
@@ -67,7 +68,7 @@ function App() {
     }
   }
 
-  const triggeredCount = items.filter((item) => item.alerted).length
+  const triggeredCount = items.filter(isAtTarget).length
   const selectedItem = items.find((item) => item.id === selectedId)
 
   function renderItems() {
@@ -124,7 +125,6 @@ function App() {
                 key={selectedItem.id}
                 item={selectedItem}
                 onClose={() => setSelectedId(null)}
-                onDelete={handleDelete}
             />
         )}
       </>

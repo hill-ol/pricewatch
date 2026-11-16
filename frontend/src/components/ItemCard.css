@@ -35,7 +35,7 @@
     background: var(--color-accent-soft);
 }
 
-.item-card--alerted {
+.item-card--at-target {
     border-color: #f5c2dc;
     border-top: 4px solid #a855f7;
 }
@@ -53,7 +53,7 @@
     border-radius: 999px;
 }
 
-.badge--alerted {
+.badge--at-target {
     background: var(--color-accent-soft);
     color: var(--color-accent-text);
 }
@@ -83,6 +83,55 @@
 .item-card__delete:hover {
     color: var(--color-accent-hover);
     background: #fdf2f8;
+}
+
+.item-card__confirm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--color-accent-text);
+    background: var(--color-accent-soft);
+    border-radius: 10px;
+    cursor: default;
+}
+
+.item-card__confirm-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.item-card__confirm-cancel,
+.item-card__confirm-remove {
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.item-card__confirm-cancel {
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+}
+
+.item-card__confirm-cancel:hover {
+    background: var(--color-background);
+}
+
+.item-card__confirm-remove {
+    color: var(--color-surface);
+    background: var(--color-accent);
+    border: 1px solid var(--color-accent);
+}
+
+.item-card__confirm-remove:hover {
+    background: var(--color-accent-hover);
 }
 
 .item-card__name {
@@ -145,7 +194,7 @@
     color: var(--color-text);
 }
 
-.item-card--alerted .item-card__value:not(.item-card__value--target) {
+.item-card--at-target .item-card__value:not(.item-card__value--target) {
     color: var(--color-accent);
 }
 
@@ -179,14 +228,4 @@
 
 .item-card__buy {
     margin-left: auto;
-    background: var(--color-accent);
-    color: var(--color-surface);
-    font-size: 14px;
-    text-decoration: none;
-    padding: 8px 14px;
-    border-radius: 8px;
-}
-
-.item-card__buy:hover {
-    background: var(--color-accent-hover);
 }
