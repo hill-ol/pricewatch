@@ -19,6 +19,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -31,7 +33,9 @@ class ShopifyPriceSourceTest {
 
   private static final String STORE = "example.myshopify.com";
   private static final String VARIANT = "gid://shopify/ProductVariant/123";
-  private static final String ENDPOINT = "https://example.myshopify.com/api/2026-07/graphql.json";
+  // Deliberately not the default, so the tests prove the configured version is the one used.
+  private static final String API_VERSION = "2025-10";
+  private static final String ENDPOINT = "https://example.myshopify.com/api/2025-10/graphql.json";
 
   private MockRestServiceServer server;
   private ShopifyPriceSource priceSource;
@@ -40,7 +44,7 @@ class ShopifyPriceSourceTest {
   void setUp() {
     RestClient.Builder builder = RestClient.builder();
     server = MockRestServiceServer.bindTo(builder).build();
-    priceSource = new ShopifyPriceSource(builder.build());
+    priceSource = new ShopifyPriceSource(builder.build(), API_VERSION);
   }
 
   @AfterEach
@@ -96,6 +100,14 @@ class ShopifyPriceSourceTest {
           .isInstanceOf(ResourceAccessException.class);
       assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofSeconds(2));
     }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", "2026-7", "latest", "2026-07/../admin"})
+  void rejectsMalformedApiVersionAtStartup(String apiVersion) {
+    assertThatThrownBy(() -> new ShopifyPriceSource(RestClient.create(), apiVersion))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("pricewatch.shopify.api-version");
   }
 
   // --- helpers ---

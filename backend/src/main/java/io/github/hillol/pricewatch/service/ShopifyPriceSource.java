@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -27,19 +28,34 @@ public class ShopifyPriceSource implements PriceSource {
       }
       """;
 
+  /** Shopify API versions look like 2026-07; "unstable" is Shopify's preview channel. */
+  private static final Pattern API_VERSION = Pattern.compile("\\d{4}-\\d{2}|unstable");
+
   private final RestClient restClient;
+  private final String apiVersion;
 
   @Autowired
   public ShopifyPriceSource(
       @Value("${pricewatch.shopify.connect-timeout:5s}") Duration connectTimeout,
-      @Value("${pricewatch.shopify.read-timeout:10s}") Duration readTimeout) {
+      @Value("${pricewatch.shopify.read-timeout:10s}") Duration readTimeout,
+      @Value("${pricewatch.shopify.api-version:2026-07}") String apiVersion) {
     this(RestClient.builder()
-        .requestFactory(requestFactory(connectTimeout, readTimeout))
-        .build());
+            .requestFactory(requestFactory(connectTimeout, readTimeout))
+            .build(),
+        apiVersion);
   }
 
-  ShopifyPriceSource(RestClient restClient) {
+  /**
+   * Shopify retires each API version about a year after release, so the version is
+   * configuration rather than code. A malformed value fails at startup, not on every check.
+   */
+  ShopifyPriceSource(RestClient restClient, String apiVersion) {
+    if (!API_VERSION.matcher(apiVersion).matches()) {
+      throw new IllegalArgumentException(
+          "pricewatch.shopify.api-version must look like 2026-07, got: " + apiVersion);
+    }
     this.restClient = restClient;
+    this.apiVersion = apiVersion;
   }
 
   /**
@@ -64,7 +80,7 @@ public class ShopifyPriceSource implements PriceSource {
     JsonNode response;
     try {
       response = restClient.post()
-          .uri("https://" + storeDomain + "/api/2026-07/graphql.json")
+          .uri("https://" + storeDomain + "/api/" + apiVersion + "/graphql.json")
           .contentType(MediaType.APPLICATION_JSON)
           .body(body)
           .retrieve()
