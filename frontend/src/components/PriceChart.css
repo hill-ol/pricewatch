@@ -1,0 +1,86 @@
+.price-chart {
+    position: relative;
+}
+
+.price-chart__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    touch-action: none;
+}
+
+.price-chart__grid {
+    stroke: var(--color-border);
+    stroke-width: 1;
+}
+
+.price-chart__axis {
+    font-size: 12px;
+    fill: var(--color-text-muted);
+}
+
+.price-chart__target {
+    stroke: var(--color-text-muted);
+    stroke-width: 1.5;
+    stroke-dasharray: 6 5;
+}
+
+.price-chart__target-label {
+    font-size: 12px;
+    font-weight: 500;
+    fill: var(--color-text-muted);
+}
+
+.price-chart__area {
+    fill: url(#price-chart-fill);
+}
+
+.price-chart__line {
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.price-chart__guide {
+    stroke: var(--color-text-muted);
+    stroke-width: 1;
+    opacity: 0.4;
+}
+
+.price-chart__dot {
+    fill: var(--color-surface);
+    stroke: var(--color-accent);
+    stroke-width: 2.5;
+}
+
+.price-chart__tooltip {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(17, 24, 39, 0.08);
+    pointer-events: none;
+    transform: translate(-50%, calc(-100% - 12px));
+}
+
+.price-chart__tooltip--left {
+    transform: translate(0, calc(-100% - 12px));
+}
+
+.price-chart__tooltip--right {
+    transform: translate(-100%, calc(-100% - 12px));
+}
+
+.price-chart__tooltip strong {
+    font-size: 14px;
+    color: var(--color-text);
+}

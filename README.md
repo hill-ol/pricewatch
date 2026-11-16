@@ -11,7 +11,7 @@ A self-hosted price tracker for Shopify stores. Paste a product link, set a targ
 - **Track any Shopify product variant.** Paste a product URL (with `?variant=`) and PriceWatch reads the price straight from the store's public Storefront GraphQL API. No scraping, no API key.
 - **Scheduled checks.** Every watched item is re-checked every 6 hours (configurable), and every result is saved as price history.
 - **One alert per price drop.** You get one email when an item drops to your target. If the price goes back above the target, the alert resets so you'll hear about the next drop. If an email fails to send, it's retried on the next run.
-- **Dashboard.** A React UI to add and remove items and see the current price, your target, and alert status for each one.
+- **Dashboard.** A React UI to add and remove items and see the current price, your target, and alert status for each one. Click a card to open a details view with an interactive price-history chart, lowest/highest prices seen, and a log of every price change.
 
 ## Tech stack
 
@@ -82,7 +82,8 @@ On any Shopify store, open a product, select a size or option so the URL include
 | Method   | Path          | Description |
 |----------|---------------|-------------|
 | `GET`    | `/items`      | List watched items |
-| `POST`   | `/items`      | Add an item: `{ name, productUrl, storeDomain, variantId, targetPrice }` |
+| `POST`   | `/items`      | Add an item: `{ name, productUrl, storeDomain, variantId, targetPrice }`. Returns 400 if a field is missing or `targetPrice` isn't positive |
+| `GET`    | `/items/{id}/history` | Price checks for an item, oldest first: `[{ price, checkedAt }]` |
 | `DELETE` | `/items/{id}` | Stop watching an item (also deletes its price history) |
 
 ## Running tests

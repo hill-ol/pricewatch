@@ -3,17 +3,43 @@ import type { NewItem, WatchedItem } from './types'
 import Header from './components/Header'
 import AddItemForm from './components/AddItemForm'
 import ItemCard from './components/ItemCard'
+import ItemDetails from './components/ItemDetails'
 import './App.css'
-import {PackageOpen} from "lucide-react";
+import { CircleAlert, LoaderCircle, PackageOpen } from 'lucide-react'
+
+type LoadStatus = 'loading' | 'error' | 'ready'
+
+async function fetchItems(): Promise<WatchedItem[]> {
+  const res = await fetch('/items')
+  if (!res.ok) {
+    throw new Error(`GET /items failed with ${res.status}`)
+  }
+  return res.json()
+}
 
 function App() {
   const [items, setItems] = useState<WatchedItem[]>([])
+  const [status, setStatus] = useState<LoadStatus>('loading')
+  const [notice, setNotice] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+
+  function loadItems() {
+    return fetchItems()
+        .then((loaded) => {
+          setItems(loaded)
+          setStatus('ready')
+        })
+        .catch(() => setStatus('error'))
+  }
 
   useEffect(() => {
-    fetch('/items')
-        .then((res) => res.json())
-        .then(setItems)
+    loadItems()
   }, [])
+
+  function handleRetry() {
+    setStatus('loading')
+    loadItems()
+  }
 
   async function handleAdd(newItem: NewItem) {
     const res = await fetch('/items', {
@@ -28,15 +54,56 @@ function App() {
     setItems((prev) => [...prev, created])
   }
 
-  function handleDelete(id: number) {
-    fetch(`/items/${id}`, { method: 'DELETE' }).then((res) => {
-      if (res.ok) {
-        setItems((prev) => prev.filter((item) => item.id !== id))
+  async function handleDelete(id: number) {
+    setNotice(null)
+    try {
+      const res = await fetch(`/items/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        throw new Error(`DELETE failed with ${res.status}`)
       }
-    })
+      setItems((prev) => prev.filter((item) => item.id !== id))
+    } catch {
+      setNotice('Could not remove that item. Is the backend running?')
+    }
   }
 
   const triggeredCount = items.filter((item) => item.alerted).length
+  const selectedItem = items.find((item) => item.id === selectedId)
+
+  function renderItems() {
+    if (status === 'loading') {
+      return (
+          <div className="empty-state">
+            <LoaderCircle size={32} className="spin" />
+            <p>Loading your watched items...</p>
+          </div>
+      )
+    }
+    if (status === 'error') {
+      return (
+          <div className="empty-state empty-state--error">
+            <CircleAlert size={32} />
+            <p className="empty-state__title">Couldn't reach the server</p>
+            <p>Make sure the backend is running on port 8080, then try again.</p>
+            <button className="empty-state__retry" onClick={handleRetry}>
+              Retry
+            </button>
+          </div>
+      )
+    }
+    if (items.length === 0) {
+      return (
+          <div className="empty-state">
+            <PackageOpen size={32} />
+            <p className="empty-state__title">Nothing watched yet</p>
+            <p>Add a product with the form to start tracking its price.</p>
+          </div>
+      )
+    }
+    return items.map((item) => (
+        <ItemCard key={item.id} item={item} onOpen={setSelectedId} onDelete={handleDelete} />
+    ))
+  }
 
   return (
       <>
@@ -44,19 +111,22 @@ function App() {
         <div className="layout">
           <AddItemForm onAdd={handleAdd} />
           <section className="items">
-            {items.length === 0 ? (
-                <div className="empty-state">
-                  <PackageOpen size={32} />
-                  <p className="empty-state__title">Nothing watched yet</p>
-                  <p>Add a product with the form to start tracking its price.</p>
-                </div>
-            ) : (
-                items.map((item) => (
-                    <ItemCard key={item.id} item={item} onDelete={handleDelete} />
-                ))
+            {notice && (
+                <p className="notice" role="alert">
+                  {notice}
+                </p>
             )}
+            {renderItems()}
           </section>
         </div>
+        {selectedItem && (
+            <ItemDetails
+                key={selectedItem.id}
+                item={selectedItem}
+                onClose={() => setSelectedId(null)}
+                onDelete={handleDelete}
+            />
+        )}
       </>
   )
 }

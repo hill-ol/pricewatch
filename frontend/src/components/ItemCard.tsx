@@ -1,20 +1,20 @@
+import type { MouseEvent } from 'react'
 import type { WatchedItem } from '../types'
+import { money } from '../format'
 import './ItemCard.css'
-import {ArrowDown, ArrowUpRight, Trash2} from "lucide-react";
+import { ArrowDown, ArrowUpRight, ChevronRight, Trash2 } from 'lucide-react'
 
 type Props = {
     item: WatchedItem
+    onOpen: (id: number) => void
     onDelete: (id: number) => void
 }
 
-const money = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-})
+function stop(event: MouseEvent) {
+    event.stopPropagation()
+}
 
-function ItemCard({ item, onDelete }: Props) {
+function ItemCard({ item, onOpen, onDelete }: Props) {
     const { lastPrice, targetPrice } = item
     const status = lastPrice === null ? 'pending' : item.alerted ? 'alerted' : 'watching'
     const variantNumber = item.variantId.split('/').pop()
@@ -26,19 +26,22 @@ function ItemCard({ item, onDelete }: Props) {
     }
 
     return (
-        <article className={`item-card item-card--${status}`}>
+        <article className={`item-card item-card--${status}`} onClick={() => onOpen(item.id)}>
             <div className="item-card__top">
                 <span className={`badge badge--${status}`}>{badgeText}</span>
                 <button
                     className="item-card__delete"
-                    onClick={() => onDelete(item.id)}
+                    onClick={(event) => {
+                        stop(event)
+                        onDelete(item.id)
+                    }}
                     aria-label={`Stop watching ${item.name}`}
                 >
                     <Trash2 size={16} />
                 </button>
             </div>
 
-            <a className="item-card__name" href={item.productUrl} target="_blank" rel="noreferrer">
+            <a className="item-card__name" href={item.productUrl} target="_blank" rel="noreferrer" onClick={stop}>
                 {item.name}
                 <ArrowUpRight size={16} />
             </a>
@@ -70,11 +73,22 @@ function ItemCard({ item, onDelete }: Props) {
                 </div>
 
                 {status === 'alerted' && (
-                    <a className="item-card__buy" href={item.productUrl} target="_blank" rel="noreferrer">
-                        Buy on Shopify
+                    <a className="item-card__buy" href={item.productUrl} target="_blank" rel="noreferrer" onClick={stop}>
+                        Purchase
                     </a>
                 )}
             </div>
+
+            <button
+                className="item-card__details"
+                onClick={(event) => {
+                    stop(event)
+                    onOpen(item.id)
+                }}
+            >
+                Price history
+                <ChevronRight size={16} />
+            </button>
         </article>
     )
 }

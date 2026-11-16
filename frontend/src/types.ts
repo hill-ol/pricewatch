@@ -9,6 +9,11 @@ export type WatchedItem = {
     alerted: boolean
 }
 
+export type PricePoint = {
+    price: number
+    checkedAt: string
+}
+
 export type NewItem = {
     name: string
     productUrl: string
