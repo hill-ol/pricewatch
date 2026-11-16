@@ -55,6 +55,19 @@ function App() {
     setItems((prev) => [...prev, created])
   }
 
+  async function handleUpdateTarget(id: number, targetPrice: number) {
+    const res = await fetch(`/items/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetPrice }),
+    })
+    if (!res.ok) {
+      throw new Error(`PATCH failed with ${res.status}`)
+    }
+    const updated: WatchedItem = await res.json()
+    setItems((prev) => prev.map((item) => (item.id === id ? updated : item)))
+  }
+
   async function handleDelete(id: number) {
     setNotice(null)
     try {
@@ -125,6 +138,7 @@ function App() {
                 key={selectedItem.id}
                 item={selectedItem}
                 onClose={() => setSelectedId(null)}
+                onUpdateTarget={handleUpdateTarget}
             />
         )}
       </>

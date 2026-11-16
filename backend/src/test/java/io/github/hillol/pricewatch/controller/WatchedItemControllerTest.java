@@ -5,6 +5,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -88,6 +89,49 @@ class WatchedItemControllerTest {
         .andExpect(jsonPath("$.length()").value(2))
         .andExpect(jsonPath("$[0].price").value(120.00))
         .andExpect(jsonPath("$[1].price").value(95.00));
+  }
+
+  @Test
+  void updatesTargetPrice() throws Exception {
+    WatchedItem item = new WatchedItem(
+        "example.myshopify.com", "gid://shopify/ProductVariant/123", "Blanket",
+        new BigDecimal("100.00"), "https://example.com/products/blanket");
+    when(repository.findById(1L)).thenReturn(Optional.of(item));
+    when(repository.save(any(WatchedItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    mockMvc.perform(patch("/items/1")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {"targetPrice": 80.00}
+                """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.targetPrice").value(80.00));
+
+    verify(repository).save(item);
+  }
+
+  @Test
+  void rejectsNonPositiveTargetOnUpdate() throws Exception {
+    mockMvc.perform(patch("/items/1")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {"targetPrice": -5}
+                """))
+        .andExpect(status().isBadRequest());
+
+    verify(repository, never()).save(any());
+  }
+
+  @Test
+  void updateReturns404ForUnknownItem() throws Exception {
+    when(repository.findById(99L)).thenReturn(Optional.empty());
+
+    mockMvc.perform(patch("/items/99")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {"targetPrice": 80.00}
+                """))
+        .andExpect(status().isNotFound());
   }
 
   @Test

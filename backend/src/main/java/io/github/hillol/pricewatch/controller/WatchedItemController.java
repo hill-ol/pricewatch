@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,6 +61,13 @@ public class WatchedItemController {
         .toList();
   }
 
+  @PatchMapping("/{id}")
+  public WatchedItem updateTarget(@PathVariable Long id, @Valid @RequestBody UpdateTargetRequest request) {
+    WatchedItem item = findItem(id);
+    item.updateTargetPrice(request.targetPrice());
+    return repository.save(item);
+  }
+
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   @Transactional
@@ -80,6 +88,8 @@ public class WatchedItemController {
       @NotBlank String name,
       @NotNull @Positive BigDecimal targetPrice,
       @NotBlank String productUrl) {}
+
+  public record UpdateTargetRequest(@NotNull @Positive BigDecimal targetPrice) {}
 
   public record PricePoint(BigDecimal price, Instant checkedAt) {}
 }

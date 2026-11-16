@@ -83,6 +83,7 @@ On any Shopify store, open a product, select a size or option so the URL include
 |----------|---------------|-------------|
 | `GET`    | `/items`      | List watched items |
 | `POST`   | `/items`      | Add an item: `{ name, productUrl, storeDomain, variantId, targetPrice }`. Returns 400 if a field is missing or `targetPrice` isn't positive |
+| `PATCH`  | `/items/{id}` | Change the target: `{ targetPrice }`. If the current price is now above the new target, the alert is re-armed |
 | `GET`    | `/items/{id}/history` | Price checks for an item, oldest first: `[{ price, checkedAt }]` |
 | `DELETE` | `/items/{id}` | Stop watching an item (also deletes its price history) |
 

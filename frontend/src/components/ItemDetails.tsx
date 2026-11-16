@@ -6,6 +6,7 @@ import { dateTime, money, shortDate } from '../format'
 import { isAtTarget } from '../itemStatus'
 import BuyLink from './BuyLink'
 import PriceChart from './PriceChart'
+import TargetPriceEditor from './TargetPriceEditor'
 import './ItemDetails.css'
 
 const CHANGES_PREVIEW_COUNT = 5
@@ -13,6 +14,7 @@ const CHANGES_PREVIEW_COUNT = 5
 type Props = {
     item: WatchedItem
     onClose: () => void
+    onUpdateTarget: (id: number, newTarget: number) => Promise<void>
 }
 
 type PriceChange = {
@@ -32,7 +34,7 @@ function priceChanges(points: PricePoint[]): PriceChange[] {
     return changes.reverse()
 }
 
-function ItemDetails({ item, onClose }: Props) {
+function ItemDetails({ item, onClose, onUpdateTarget }: Props) {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const [points, setPoints] = useState<PricePoint[] | null>(null)
     const [failed, setFailed] = useState(false)
@@ -103,7 +105,10 @@ function ItemDetails({ item, onClose }: Props) {
                     </div>
                     <div className="details__stat">
                         <span className="details__label">Target</span>
-                        <span className="details__value details__value--accent">{money.format(item.targetPrice)}</span>
+                        <TargetPriceEditor
+                            value={item.targetPrice}
+                            onSave={(newTarget) => onUpdateTarget(item.id, newTarget)}
+                        />
                     </div>
                     <div className="details__stat">
                         <span className="details__label">Lowest seen</span>

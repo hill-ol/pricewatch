@@ -1,0 +1,120 @@
+.target-editor {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.target-editor--editing {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+}
+
+.target-editor__value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-accent);
+}
+
+.target-editor__row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.target-editor__currency {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-accent);
+}
+
+.target-editor__input {
+    width: 100%;
+    min-width: 0;
+    padding: 2px 6px;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-accent);
+    border-radius: 6px;
+    outline: none;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Hide the number spinners: they eat most of the width in the narrow stat box. */
+.target-editor__input::-webkit-outer-spin-button,
+.target-editor__input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.target-editor__input:focus {
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.target-editor__input[aria-invalid='true'] {
+    border-color: #f87171;
+}
+
+.target-editor__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    padding: 4px;
+    color: var(--color-text-muted);
+    background: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.target-editor__icon:hover:not(:disabled) {
+    color: var(--color-accent-text);
+    background: var(--color-accent-soft);
+}
+
+.target-editor__icon:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.target-editor__actions {
+    display: flex;
+    gap: 4px;
+}
+
+.target-editor__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 6px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    background: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.target-editor__action:hover:not(:disabled) {
+    color: var(--color-accent-text);
+    background: var(--color-accent-soft);
+}
+
+.target-editor__action:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.target-editor__action--save:not(:disabled) {
+    color: var(--color-accent);
+}
+
+.target-editor__error {
+    font-size: 12px;
+    color: #b91c1c;
+}

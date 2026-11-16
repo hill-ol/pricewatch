@@ -66,6 +66,19 @@ public class WatchedItem {
     this.targetPrice = targetPrice;
   }
 
+  /**
+   * Changes the target and keeps the alert state consistent with it. If the last known
+   * price is now above the new target, the alert is re-armed so the next drop to the new
+   * target sends an email. Otherwise the alert state is left alone, which avoids a
+   * duplicate email when the item was already alerted and is still at target.
+   */
+  public void updateTargetPrice(BigDecimal newTarget) {
+    this.targetPrice = newTarget;
+    if (lastPrice != null && lastPrice.compareTo(newTarget) > 0) {
+      this.alerted = false;
+    }
+  }
+
   public BigDecimal getLastPrice() {
     return lastPrice;
   }
