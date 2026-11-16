@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -117,11 +118,34 @@ class WatchedItemControllerTest {
   }
 
   @Test
-  void rejectsMissingFields() throws Exception {
+  void rejectsMissingFieldsAndNamesEachOne() throws Exception {
     postJson("""
         {"name": "Blanket", "targetPrice": 100.00}
         """)
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(jsonPath("$.detail").value("Some fields are invalid."))
+        .andExpect(jsonPath("$.errors.storeDomain").value("must not be blank"))
+        .andExpect(jsonPath("$.errors.variantId").value("must not be blank"))
+        .andExpect(jsonPath("$.errors.productUrl").value("must not be blank"))
+        .andExpect(jsonPath("$.errors.name").doesNotExist());
+
+    verifyNoInteractions(service);
+  }
+
+  @Test
+  void reportsTheRequiredRuleWhenAFieldBreaksSeveral() throws Exception {
+    // "" breaks both @NotBlank and @Pattern; "must not be blank" is the useful one to show.
+    postItem("", "gid://shopify/ProductVariant/123", "https://example.com/p")
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors.storeDomain").value("must not be blank"));
+  }
+
+  @Test
+  void malformedJsonIsAProblemResponseToo() throws Exception {
+    postJson("{not json")
+        .andExpect(status().isBadRequest())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
 
     verifyNoInteractions(service);
   }
@@ -139,7 +163,9 @@ class WatchedItemControllerTest {
       "-bad.com"})
   void rejectsStoreDomainsThatAreNotPlainHostnames(String storeDomain) throws Exception {
     postItem(storeDomain, "gid://shopify/ProductVariant/123", "https://example.com/p")
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors.storeDomain")
+            .value("must be a store hostname like example.myshopify.com"));
 
     verifyNoInteractions(service);
   }
@@ -148,7 +174,8 @@ class WatchedItemControllerTest {
   @ValueSource(strings = {"javascript:alert(1)", "ftp://example.com/p", "example.com/p", "https://"})
   void rejectsProductUrlsThatAreNotHttp(String productUrl) throws Exception {
     postItem("example.myshopify.com", "gid://shopify/ProductVariant/123", productUrl)
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors.productUrl").value("must be an http(s) URL"));
 
     verifyNoInteractions(service);
   }
@@ -157,7 +184,8 @@ class WatchedItemControllerTest {
   @ValueSource(strings = {"123", "gid://shopify/Product/123", "gid://shopify/ProductVariant/abc"})
   void rejectsMalformedVariantIds(String variantId) throws Exception {
     postItem("example.myshopify.com", variantId, "https://example.com/p")
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors.variantId").value("must look like gid://shopify/ProductVariant/123"));
 
     verifyNoInteractions(service);
   }
@@ -200,7 +228,9 @@ class WatchedItemControllerTest {
     when(service.history(99L)).thenThrow(new ItemNotFoundException(99L));
 
     mockMvc.perform(get("/items/99/history"))
-        .andExpect(status().isNotFound());
+        .andExpect(status().isNotFound())
+        .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+        .andExpect(jsonPath("$.detail").value("No item with id 99"));
   }
 
   // --- PATCH /items/{id} ---
@@ -217,7 +247,8 @@ class WatchedItemControllerTest {
   @Test
   void rejectsNonPositiveTargetOnUpdate() throws Exception {
     patchTarget(1L, "-5")
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors.targetPrice").value("must be greater than 0"));
 
     verifyNoInteractions(service);
   }
@@ -228,7 +259,9 @@ class WatchedItemControllerTest {
         .thenThrow(new ObjectOptimisticLockingFailureException(WatchedItem.class, 1L));
 
     patchTarget(1L, "80.00")
-        .andExpect(status().isConflict());
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.detail")
+            .value("This item was just updated by a price check. Please try again."));
   }
 
   @Test

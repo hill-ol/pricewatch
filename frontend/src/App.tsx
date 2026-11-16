@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { NewItem, WatchedItem } from './types'
-import { createItem, deleteItem, getItems, updateTargetPrice } from './api'
+import { ApiError, createItem, deleteItem, describeError, getItems, updateTargetPrice } from './api'
 import Header from './components/Header'
 import AddItemForm from './components/AddItemForm'
 import ItemCard from './items/ItemCard'
@@ -47,11 +47,17 @@ function App() {
 
   async function handleDelete(id: number) {
     setNotice(null)
+    const removeFromList = () => setItems((prev) => prev.filter((item) => item.id !== id))
     try {
       await deleteItem(id)
-      setItems((prev) => prev.filter((item) => item.id !== id))
-    } catch {
-      setNotice('Could not remove that item. Is the backend running?')
+      removeFromList()
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        // Already gone (e.g. removed in another tab): the goal is met, so just sync the list.
+        removeFromList()
+        return
+      }
+      setNotice(describeError(err, 'Could not remove that item. Is the backend running?'))
     }
   }
 

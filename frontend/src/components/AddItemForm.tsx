@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { BellRing, Link } from 'lucide-react'
 import type { NewItem } from '../types'
+import { describeError } from '../api'
 import './AddItemForm.css'
 
 type Props = {
@@ -16,12 +17,22 @@ const emptyForm = {
 
 type FormField = keyof typeof emptyForm
 
+// storeDomain and variantId come from the pasted URL, so they're named after it.
+const FIELD_LABELS: Record<string, string> = {
+    name: 'Product name',
+    productUrl: 'Product URL',
+    storeDomain: "The URL's store address",
+    variantId: "The URL's variant",
+    targetPrice: 'Target price',
+}
+
 function parseProductUrl(url: string) {
     const parsed = new URL(url)
     const variant = parsed.searchParams.get('variant')
     return {
         storeDomain: parsed.hostname,
-        variantId: variant ? `gid://shopify/ProductVariant/${variant}` : null,
+        // Shopify variant ids are numeric; anything else gets the "pick a size" hint below.
+        variantId: variant && /^\d+$/.test(variant) ? `gid://shopify/ProductVariant/${variant}` : null,
     }
 }
 
@@ -54,8 +65,8 @@ function AddItemForm({ onAdd }: Props) {
                 targetPrice: Number(form.targetPrice),
             })
             setForm(emptyForm)
-        } catch {
-            setError('Could not add this item. Check the fields and try again.')
+        } catch (err) {
+            setError(describeError(err, 'Could not add this item. Check the fields and try again.', FIELD_LABELS))
         } finally {
             setSubmitting(false)
         }

@@ -59,6 +59,8 @@
     margin: 0;
     font-size: 13px;
     color: #b91c1c;
+    /* One line per invalid field. */
+    white-space: pre-line;
 }
 
 .add-form__submit {

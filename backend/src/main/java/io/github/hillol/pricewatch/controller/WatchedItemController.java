@@ -1,7 +1,6 @@
 package io.github.hillol.pricewatch.controller;
 
 import io.github.hillol.pricewatch.model.WatchedItem;
-import io.github.hillol.pricewatch.service.ItemNotFoundException;
 import io.github.hillol.pricewatch.service.WatchedItemService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -12,10 +11,8 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** HTTP in and out: validates requests, calls {@link WatchedItemService}, maps errors to statuses. */
+/** HTTP in and out: validates requests and calls {@link WatchedItemService}. Errors: ApiExceptionHandler. */
 @RestController
 @RequestMapping("/items")
 public class WatchedItemController {
@@ -68,20 +65,6 @@ public class WatchedItemController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable long id) {
     service.delete(id);
-  }
-
-  @ExceptionHandler(ItemNotFoundException.class)
-  @ResponseStatus(HttpStatus.NOT_FOUND)
-  public void handleNotFound() {
-  }
-
-  /**
-   * A price check saved the same item between our load and our save. Tell the client to
-   * retry rather than returning a 500 or overwriting the newer data.
-   */
-  @ExceptionHandler(OptimisticLockingFailureException.class)
-  @ResponseStatus(HttpStatus.CONFLICT)
-  public void handleConcurrentUpdate() {
   }
 
   /**

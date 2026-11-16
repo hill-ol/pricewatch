@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import { Check, Pencil, X } from 'lucide-react'
+import { describeError } from '../api'
 import { money } from '../format'
 import './TargetPriceEditor.css'
 
@@ -42,8 +43,8 @@ function TargetPriceEditor({ value, onSave }: Props) {
         try {
             await onSave(parsed)
             setEditing(false)
-        } catch {
-            setError('Could not save. Try again.')
+        } catch (err) {
+            setError(describeError(err, 'Could not save. Try again.', { targetPrice: 'Target' }))
         } finally {
             setSaving(false)
         }
