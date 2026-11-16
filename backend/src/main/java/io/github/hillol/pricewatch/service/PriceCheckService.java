@@ -7,6 +7,7 @@ import io.github.hillol.pricewatch.repository.WatchedItemRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -47,8 +48,18 @@ public class PriceCheckService {
     }
   }
 
-  private void checkOne(WatchedItem item) {
-    BigDecimal price = priceSource.fetchPrice(item.getStoreDomain(), item.getVariantId());
+  private void checkOne(WatchedItem snapshot) {
+    // The fetch is the slow part, so do it before reloading the item. Applying the result to
+    // a fresh copy keeps any target change made in the meantime instead of overwriting it.
+    BigDecimal price = priceSource.fetchPrice(snapshot.getStoreDomain(), snapshot.getVariantId());
+
+    Optional<WatchedItem> current = watchedItemRepository.findById(snapshot.getId());
+    if (current.isEmpty()) {
+      log.info("{} was removed during the check, skipping", snapshot.getName());
+      return;
+    }
+    WatchedItem item = current.get();
+
     priceCheckRepository.save(new PriceCheck(item, price, Instant.now()));
     item.setLastPrice(price);
     handleAlert(item, price);

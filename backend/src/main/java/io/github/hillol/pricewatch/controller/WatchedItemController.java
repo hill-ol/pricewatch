@@ -6,13 +6,17 @@ import io.github.hillol.pricewatch.repository.WatchedItemRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -77,17 +81,52 @@ public class WatchedItemController {
     repository.delete(item);
   }
 
+  /**
+   * A price check saved the same item between our load and our save. Tell the client to
+   * retry rather than returning a 500 or overwriting the newer data.
+   */
+  @ExceptionHandler(OptimisticLockingFailureException.class)
+  @ResponseStatus(HttpStatus.CONFLICT)
+  public void handleConcurrentUpdate() {
+  }
+
   private WatchedItem findItem(Long id) {
     return repository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No item with id " + id));
   }
 
+  /**
+   * storeDomain becomes the host the server calls, so only a plain public hostname is allowed:
+   * no scheme, port, path, credentials, "localhost" or IP address. productUrl is rendered as a
+   * link in the UI, so only http(s) URLs are allowed (this blocks "javascript:" links). The
+   * 255-character limits match the database columns, so long input is a 400 instead of a 500.
+   */
   public record CreateItemRequest(
-      @NotBlank String storeDomain,
-      @NotBlank String variantId,
-      @NotBlank String name,
-      @NotNull @Positive BigDecimal targetPrice,
-      @NotBlank String productUrl) {}
+      @NotBlank
+      @Size(max = 253)
+      @Pattern(
+          regexp = "([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,63}",
+          message = "must be a store hostname like example.myshopify.com")
+      String storeDomain,
+
+      @NotBlank
+      @Pattern(
+          regexp = "gid://shopify/ProductVariant/\\d+",
+          message = "must look like gid://shopify/ProductVariant/123")
+      String variantId,
+
+      @NotBlank
+      @Size(max = 255)
+      String name,
+
+      @NotNull
+      @Positive
+      BigDecimal targetPrice,
+
+      @NotBlank
+      @Size(max = 255)
+      @Pattern(regexp = "https?://\\S+", message = "must be an http(s) URL")
+      String productUrl) {}
 
   public record UpdateTargetRequest(@NotNull @Positive BigDecimal targetPrice) {}
 

@@ -1,9 +1,12 @@
 package io.github.hillol.pricewatch.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Version;
 import java.math.BigDecimal;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 public class WatchedItem {
@@ -25,6 +28,16 @@ public class WatchedItem {
   private boolean alerted;
 
   private String productUrl;
+
+  /**
+   * Optimistic lock: every save bumps this, and saving a copy loaded before someone else's
+   * save fails instead of silently overwriting their change. The column default lets
+   * Hibernate add the column to an existing database (existing rows start at 0).
+   */
+  @Version
+  @ColumnDefault("0")
+  @Column(nullable = false)
+  private long version;
 
   protected WatchedItem() {
     // required by JPA
