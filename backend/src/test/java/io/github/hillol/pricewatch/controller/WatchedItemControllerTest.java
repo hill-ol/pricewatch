@@ -1,9 +1,12 @@
 package io.github.hillol.pricewatch.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -12,12 +15,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import io.github.hillol.pricewatch.model.PriceCheck;
 import io.github.hillol.pricewatch.model.WatchedItem;
-import io.github.hillol.pricewatch.repository.PriceCheckRepository;
-import io.github.hillol.pricewatch.repository.WatchedItemRepository;
+import io.github.hillol.pricewatch.service.ItemNotFoundException;
+import io.github.hillol.pricewatch.service.WatchedItemService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -29,13 +31,16 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+/**
+ * Covers the HTTP layer only: request validation, status codes and JSON shape. What the
+ * operations actually do to the database is covered by WatchedItemServiceTest.
+ */
 @WebMvcTest(WatchedItemController.class)
 class WatchedItemControllerTest {
 
   @Autowired private MockMvc mockMvc;
 
-  @MockitoBean private WatchedItemRepository repository;
-  @MockitoBean private PriceCheckRepository priceCheckRepository;
+  @MockitoBean private WatchedItemService service;
 
   private static final String VALID_ITEM = """
       {
@@ -47,48 +52,78 @@ class WatchedItemControllerTest {
       }
       """;
 
-  private ResultActions postItem(String storeDomain, String variantId, String productUrl) throws Exception {
-    return mockMvc.perform(post("/items")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content("""
-            {
-              "storeDomain": "%s",
-              "variantId": "%s",
-              "name": "Blanket",
-              "targetPrice": 100.00,
-              "productUrl": "%s"
-            }
-            """.formatted(storeDomain, variantId, productUrl)));
+  private static WatchedItem blanket(String targetPrice) {
+    return new WatchedItem(
+        "example.myshopify.com", "gid://shopify/ProductVariant/123", "Blanket",
+        new BigDecimal(targetPrice), "https://example.com/products/blanket");
   }
+
+  /** Makes service.create return an item built from whatever the controller passed in. */
+  private void givenCreateEchoesInput() {
+    when(service.create(anyString(), anyString(), anyString(), any(), anyString()))
+        .thenAnswer(inv -> new WatchedItem(
+            inv.getArgument(0), inv.getArgument(1), inv.getArgument(2),
+            inv.getArgument(3), inv.getArgument(4)));
+  }
+
+  private ResultActions postItem(String storeDomain, String variantId, String productUrl) throws Exception {
+    return postJson("""
+        {
+          "storeDomain": "%s",
+          "variantId": "%s",
+          "name": "Blanket",
+          "targetPrice": 100.00,
+          "productUrl": "%s"
+        }
+        """.formatted(storeDomain, variantId, productUrl));
+  }
+
+  private ResultActions postJson(String json) throws Exception {
+    return mockMvc.perform(post("/items").contentType(MediaType.APPLICATION_JSON).content(json));
+  }
+
+  private ResultActions patchTarget(long id, String targetPrice) throws Exception {
+    return mockMvc.perform(patch("/items/" + id)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"targetPrice\": " + targetPrice + "}"));
+  }
+
+  // --- POST /items ---
 
   @Test
   void createsValidItem() throws Exception {
-    when(repository.save(any(WatchedItem.class))).thenAnswer(inv -> inv.getArgument(0));
+    givenCreateEchoesInput();
 
-    mockMvc.perform(post("/items").contentType(MediaType.APPLICATION_JSON).content(VALID_ITEM))
+    postJson(VALID_ITEM)
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.name").value("Blanket"));
-  }
+        .andExpect(jsonPath("$.name").value("Blanket"))
+        .andExpect(jsonPath("$.targetPrice").value(100.00));
 
-  @Test
-  void rejectsMissingFields() throws Exception {
-    mockMvc.perform(post("/items")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""
-                {"name": "Blanket", "targetPrice": 100.00}
-                """))
-        .andExpect(status().isBadRequest());
-
-    verify(repository, never()).save(any());
+    verify(service).create(
+        "example.myshopify.com",
+        "gid://shopify/ProductVariant/123",
+        "Blanket",
+        new BigDecimal("100.00"),
+        "https://example.com/products/blanket?variant=123");
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"example.myshopify.com", "lolablankets.com", "shop.example.co.uk"})
   void acceptsStoreHostnames(String storeDomain) throws Exception {
-    when(repository.save(any(WatchedItem.class))).thenAnswer(inv -> inv.getArgument(0));
+    givenCreateEchoesInput();
 
     postItem(storeDomain, "gid://shopify/ProductVariant/123", "https://example.com/p")
         .andExpect(status().isCreated());
+  }
+
+  @Test
+  void rejectsMissingFields() throws Exception {
+    postJson("""
+        {"name": "Blanket", "targetPrice": 100.00}
+        """)
+        .andExpect(status().isBadRequest());
+
+    verifyNoInteractions(service);
   }
 
   @ParameterizedTest
@@ -106,7 +141,7 @@ class WatchedItemControllerTest {
     postItem(storeDomain, "gid://shopify/ProductVariant/123", "https://example.com/p")
         .andExpect(status().isBadRequest());
 
-    verify(repository, never()).save(any());
+    verifyNoInteractions(service);
   }
 
   @ParameterizedTest
@@ -115,7 +150,7 @@ class WatchedItemControllerTest {
     postItem("example.myshopify.com", "gid://shopify/ProductVariant/123", productUrl)
         .andExpect(status().isBadRequest());
 
-    verify(repository, never()).save(any());
+    verifyNoInteractions(service);
   }
 
   @ParameterizedTest
@@ -124,36 +159,31 @@ class WatchedItemControllerTest {
     postItem("example.myshopify.com", variantId, "https://example.com/p")
         .andExpect(status().isBadRequest());
 
-    verify(repository, never()).save(any());
+    verifyNoInteractions(service);
   }
 
   @Test
   void rejectsNameLongerThanTheDatabaseColumn() throws Exception {
-    mockMvc.perform(post("/items")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(VALID_ITEM.replace("\"Blanket\"", "\"" + "x".repeat(256) + "\"")))
+    postJson(VALID_ITEM.replace("\"Blanket\"", "\"" + "x".repeat(256) + "\""))
         .andExpect(status().isBadRequest());
 
-    verify(repository, never()).save(any());
+    verifyNoInteractions(service);
   }
 
   @Test
   void rejectsNonPositiveTargetPrice() throws Exception {
-    mockMvc.perform(post("/items")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(VALID_ITEM.replace("100.00", "0")))
+    postJson(VALID_ITEM.replace("100.00", "0"))
         .andExpect(status().isBadRequest());
 
-    verify(repository, never()).save(any());
+    verifyNoInteractions(service);
   }
 
+  // --- GET /items/{id}/history ---
+
   @Test
-  void returnsPriceHistoryInOrder() throws Exception {
-    WatchedItem item = new WatchedItem(
-        "example.myshopify.com", "gid://shopify/ProductVariant/123", "Blanket",
-        new BigDecimal("100.00"), "https://example.com/products/blanket");
-    when(repository.findById(1L)).thenReturn(Optional.of(item));
-    when(priceCheckRepository.findByWatchedItemOrderByCheckedAtAsc(item)).thenReturn(List.of(
+  void returnsPriceHistoryAsPricePoints() throws Exception {
+    WatchedItem item = blanket("100.00");
+    when(service.history(1L)).thenReturn(List.of(
         new PriceCheck(item, new BigDecimal("120.00"), Instant.parse("2026-11-01T00:00:00Z")),
         new PriceCheck(item, new BigDecimal("95.00"), Instant.parse("2026-11-02T00:00:00Z"))));
 
@@ -161,74 +191,69 @@ class WatchedItemControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(2))
         .andExpect(jsonPath("$[0].price").value(120.00))
+        .andExpect(jsonPath("$[0].checkedAt").value("2026-11-01T00:00:00Z"))
         .andExpect(jsonPath("$[1].price").value(95.00));
   }
 
   @Test
-  void updatesTargetPrice() throws Exception {
-    WatchedItem item = new WatchedItem(
-        "example.myshopify.com", "gid://shopify/ProductVariant/123", "Blanket",
-        new BigDecimal("100.00"), "https://example.com/products/blanket");
-    when(repository.findById(1L)).thenReturn(Optional.of(item));
-    when(repository.save(any(WatchedItem.class))).thenAnswer(inv -> inv.getArgument(0));
+  void historyReturns404ForUnknownItem() throws Exception {
+    when(service.history(99L)).thenThrow(new ItemNotFoundException(99L));
 
-    mockMvc.perform(patch("/items/1")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""
-                {"targetPrice": 80.00}
-                """))
+    mockMvc.perform(get("/items/99/history"))
+        .andExpect(status().isNotFound());
+  }
+
+  // --- PATCH /items/{id} ---
+
+  @Test
+  void updatesTargetPrice() throws Exception {
+    when(service.updateTargetPrice(1L, new BigDecimal("80.00"))).thenReturn(blanket("80.00"));
+
+    patchTarget(1L, "80.00")
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.targetPrice").value(80.00));
-
-    verify(repository).save(item);
   }
 
   @Test
   void rejectsNonPositiveTargetOnUpdate() throws Exception {
-    mockMvc.perform(patch("/items/1")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""
-                {"targetPrice": -5}
-                """))
+    patchTarget(1L, "-5")
         .andExpect(status().isBadRequest());
 
-    verify(repository, never()).save(any());
+    verifyNoInteractions(service);
   }
 
   @Test
   void updateReturns409WhenAPriceCheckSavedTheItemFirst() throws Exception {
-    WatchedItem item = new WatchedItem(
-        "example.myshopify.com", "gid://shopify/ProductVariant/123", "Blanket",
-        new BigDecimal("100.00"), "https://example.com/products/blanket");
-    when(repository.findById(1L)).thenReturn(Optional.of(item));
-    when(repository.save(any(WatchedItem.class)))
+    when(service.updateTargetPrice(1L, new BigDecimal("80.00")))
         .thenThrow(new ObjectOptimisticLockingFailureException(WatchedItem.class, 1L));
 
-    mockMvc.perform(patch("/items/1")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""
-                {"targetPrice": 80.00}
-                """))
+    patchTarget(1L, "80.00")
         .andExpect(status().isConflict());
   }
 
   @Test
   void updateReturns404ForUnknownItem() throws Exception {
-    when(repository.findById(99L)).thenReturn(Optional.empty());
+    when(service.updateTargetPrice(99L, new BigDecimal("80.00"))).thenThrow(new ItemNotFoundException(99L));
 
-    mockMvc.perform(patch("/items/99")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""
-                {"targetPrice": 80.00}
-                """))
+    patchTarget(99L, "80.00")
         .andExpect(status().isNotFound());
   }
 
-  @Test
-  void historyReturns404ForUnknownItem() throws Exception {
-    when(repository.findById(99L)).thenReturn(Optional.empty());
+  // --- DELETE /items/{id} ---
 
-    mockMvc.perform(get("/items/99/history"))
+  @Test
+  void deletesItem() throws Exception {
+    mockMvc.perform(delete("/items/1"))
+        .andExpect(status().isNoContent());
+
+    verify(service).delete(1L);
+  }
+
+  @Test
+  void deleteReturns404ForUnknownItem() throws Exception {
+    doThrow(new ItemNotFoundException(99L)).when(service).delete(99L);
+
+    mockMvc.perform(delete("/items/99"))
         .andExpect(status().isNotFound());
   }
 }
