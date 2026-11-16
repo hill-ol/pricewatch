@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
-import { ArrowDown, ArrowUp, ArrowUpRight, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, X } from 'lucide-react'
 import type { PricePoint, WatchedItem } from '../types'
+import { getPriceHistory } from '../api'
 import { dateTime, money, shortDate } from '../format'
-import { isAtTarget } from '../itemStatus'
+import { isAtTarget } from './itemStatus'
 import BuyLink from './BuyLink'
 import PriceChart from './PriceChart'
+import ProductLink from './ProductLink'
 import TargetPriceEditor from './TargetPriceEditor'
 import './ItemDetails.css'
 
@@ -48,11 +50,7 @@ function ItemDetails({ item, onClose, onUpdateTarget }: Props) {
     }, [])
 
     useEffect(() => {
-        fetch(`/items/${item.id}/history`)
-            .then((res) => {
-                if (!res.ok) throw new Error(`History request failed with ${res.status}`)
-                return res.json()
-            })
+        getPriceHistory(item.id)
             .then(setPoints)
             .catch(() => setFailed(true))
     }, [item.id])
@@ -83,12 +81,12 @@ function ItemDetails({ item, onClose, onUpdateTarget }: Props) {
             <div className="details__body">
                 <header className="details__header">
                     <div>
-                        <h2 id="details-title" className="details__title">{item.name}</h2>
+                        <h2 id="details-title" className="details__title">
+                            <ProductLink url={item.productUrl} name={item.name} />
+                        </h2>
                         <div className="details__meta">
                             <code>{item.storeDomain}</code>
-                            <a href={item.productUrl} target="_blank" rel="noreferrer">
-                                View product <ArrowUpRight size={14} />
-                            </a>
+                            <span>Variant #{item.variantId.split('/').pop()}</span>
                         </div>
                     </div>
                     <button className="details__close" onClick={close} aria-label="Close">

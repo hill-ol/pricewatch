@@ -2,10 +2,11 @@ import { useState } from 'react'
 import type { MouseEvent } from 'react'
 import type { WatchedItem } from '../types'
 import { money } from '../format'
-import { itemStatus } from '../itemStatus'
+import { itemStatus } from './itemStatus'
 import BuyLink from './BuyLink'
 import './ItemCard.css'
-import { ArrowDown, ArrowUpRight, ChevronRight, Trash2 } from 'lucide-react'
+import { ArrowDown, ChevronRight, Trash2 } from 'lucide-react'
+import ProductLink from './ProductLink'
 
 type Props = {
     item: WatchedItem
@@ -70,10 +71,7 @@ function ItemCard({ item, onOpen, onDelete }: Props) {
                 </div>
             )}
 
-            <a className="item-card__name" href={item.productUrl} target="_blank" rel="noreferrer" onClick={stop}>
-                {item.name}
-                <ArrowUpRight size={16} />
-            </a>
+            <ProductLink url={item.productUrl} name={item.name} className="item-card__name" />
 
             <div className="item-card__meta">
                 <code>{item.storeDomain}</code>

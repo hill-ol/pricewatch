@@ -1,22 +1,15 @@
 import { useEffect, useState } from 'react'
 import type { NewItem, WatchedItem } from './types'
+import { createItem, deleteItem, getItems, updateTargetPrice } from './api'
 import Header from './components/Header'
 import AddItemForm from './components/AddItemForm'
-import ItemCard from './components/ItemCard'
-import ItemDetails from './components/ItemDetails'
-import { isAtTarget } from './itemStatus'
+import ItemCard from './items/ItemCard'
+import ItemDetails from './items/ItemDetails'
+import { isAtTarget } from './items/itemStatus'
 import './App.css'
 import { CircleAlert, LoaderCircle, PackageOpen } from 'lucide-react'
 
 type LoadStatus = 'loading' | 'error' | 'ready'
-
-async function fetchItems(): Promise<WatchedItem[]> {
-  const res = await fetch('/items')
-  if (!res.ok) {
-    throw new Error(`GET /items failed with ${res.status}`)
-  }
-  return res.json()
-}
 
 function App() {
   const [items, setItems] = useState<WatchedItem[]>([])
@@ -25,7 +18,7 @@ function App() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
   function loadItems() {
-    return fetchItems()
+    return getItems()
         .then((loaded) => {
           setItems(loaded)
           setStatus('ready')
@@ -43,38 +36,19 @@ function App() {
   }
 
   async function handleAdd(newItem: NewItem) {
-    const res = await fetch('/items', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newItem),
-    })
-    if (!res.ok) {
-      throw new Error('Failed to add item')
-    }
-    const created: WatchedItem = await res.json()
+    const created = await createItem(newItem)
     setItems((prev) => [...prev, created])
   }
 
   async function handleUpdateTarget(id: number, targetPrice: number) {
-    const res = await fetch(`/items/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetPrice }),
-    })
-    if (!res.ok) {
-      throw new Error(`PATCH failed with ${res.status}`)
-    }
-    const updated: WatchedItem = await res.json()
+    const updated = await updateTargetPrice(id, targetPrice)
     setItems((prev) => prev.map((item) => (item.id === id ? updated : item)))
   }
 
   async function handleDelete(id: number) {
     setNotice(null)
     try {
-      const res = await fetch(`/items/${id}`, { method: 'DELETE' })
-      if (!res.ok) {
-        throw new Error(`DELETE failed with ${res.status}`)
-      }
+      await deleteItem(id)
       setItems((prev) => prev.filter((item) => item.id !== id))
     } catch {
       setNotice('Could not remove that item. Is the backend running?')

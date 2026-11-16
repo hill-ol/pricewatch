@@ -1,0 +1,15 @@
+.product-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.product-link:hover {
+    text-decoration: underline;
+}
+
+.product-link__icon {
+    flex-shrink: 0;
+}

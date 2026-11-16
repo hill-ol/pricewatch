@@ -135,18 +135,9 @@
 }
 
 .item-card__name {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
     align-self: flex-start;
     font-size: 20px;
     font-weight: 500;
-    color: var(--color-text);
-    text-decoration: none;
-}
-
-.item-card__name:hover {
-    text-decoration: underline;
 }
 
 .item-card__meta {

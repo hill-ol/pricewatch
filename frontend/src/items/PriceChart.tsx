@@ -15,7 +15,7 @@ const MARGIN = { top: 16, right: 16, bottom: 28, left: 56 }
 const DAY_MS = 24 * 60 * 60 * 1000
 
 // Round tick values (e.g. $320, $340, $360) that fall inside [min, max].
-function niceTicks(min: number, max: number, target = 3): number[] {
+function niceTicks(min: number, max: number, target = 4): number[] {
     const rough = (max - min) / target
     const magnitude = 10 ** Math.floor(Math.log10(rough))
     const step = [1, 2, 2.5, 5, 10].map((m) => m * magnitude).find((s) => s >= rough) ?? rough

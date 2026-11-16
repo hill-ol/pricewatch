@@ -1,4 +1,4 @@
-import type { WatchedItem } from './types'
+import type { WatchedItem } from '../types'
 
 // 'at-target' is based on the price itself, not on whether the alert email went out:
 // `alerted` only flips to true after a successful send, so a failed email would
