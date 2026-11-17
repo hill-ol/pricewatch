@@ -29,7 +29,7 @@
     color: var(--color-text-muted);
     background: var(--color-surface);
     border: 1px dashed var(--color-border);
-    border-radius: 16px;
+    border-radius: var(--radius-card);
 }
 
 .empty-state p {
@@ -55,7 +55,7 @@
     font: inherit;
     font-size: 14px;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 8px 16px;
     cursor: pointer;
 }
@@ -70,7 +70,7 @@
     font-size: 14px;
     color: var(--color-accent-text);
     background: var(--color-accent-soft);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
 }
 
 .spin {

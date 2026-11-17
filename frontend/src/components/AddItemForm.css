@@ -2,7 +2,7 @@
 .add-form {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 16px;
+    border-radius: var(--radius-card);
     padding: 24px;
     display: flex;
     flex-direction: column;
@@ -40,7 +40,7 @@
     font-weight: 400;
     padding: 10px 12px;
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: var(--color-surface);
 }
 
@@ -58,7 +58,7 @@
 .add-form__error {
     margin: 0;
     font-size: 13px;
-    color: #b91c1c;
+    color: var(--color-danger-text);
     /* One line per invalid field. */
     white-space: pre-line;
 }
@@ -72,7 +72,7 @@
     font-weight: 500;
     padding: 12px;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     background: var(--color-accent);
     color: var(--color-surface);
     cursor: pointer;
@@ -102,6 +102,6 @@
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: #a78bfa;
+    color: var(--color-icon-decorative);
     pointer-events: none;
 }

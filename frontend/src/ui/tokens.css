@@ -1,0 +1,62 @@
+/*
+ * Design tokens: the single source of truth for PriceWatch's colors, shapes, depth and motion.
+ * Components use these variables instead of raw values, so a change here applies everywhere.
+ * Names describe the job ("accent", "danger", "status-watching"), not the color itself.
+ */
+:root {
+    /* --- Brand accent (pink) --- */
+    --color-accent: #db2777;
+    --color-accent-hover: #be185d;
+    --color-accent-text: #9d174d;      /* accent-colored text on light backgrounds */
+    --color-accent-soft: #fce7f3;      /* tinted fills: badges, hover backgrounds, focus ring */
+    --color-accent-tint: #fdf2f8;      /* lightest accent fill */
+    --color-accent-border: #f5c2dc;    /* borders on highlighted cards */
+    --color-accent-border-soft: #fbcfe8;
+
+    /* Secondary highlight used on items that hit their target */
+    --color-highlight: #a855f7;
+    --color-icon-decorative: #a78bfa;  /* non-interactive icons, e.g. inside inputs */
+
+    /* --- Text --- */
+    --color-text: #111827;
+    --color-text-muted: #6b7280;
+    --color-text-subtle: #9ca3af;      /* low-emphasis icons and controls */
+
+    /* --- Surfaces --- */
+    --color-surface: #fff;             /* cards, dialogs, inputs */
+    --color-background: #fdf8fb;       /* page background */
+    --color-border: #f1e4ec;
+    --color-code-background: #f9fafb;  /* inline <code> chips */
+    --color-code-border: #e5e7eb;
+    --color-overlay: rgba(17, 24, 39, 0.4);  /* behind modal dialogs */
+
+    /* --- Status: one pair per item state, plus the header's summary chip --- */
+    --color-status-pending-bg: #e0e7ff;
+    --color-status-pending-text: #3730a3;
+    --color-status-watching-bg: #ede9fe;
+    --color-status-watching-text: #5b21b6;
+    --color-status-info-tint: #eef2ff; /* lightest pending-family fill */
+
+    /* --- Feedback --- */
+    --color-danger-text: #b91c1c;
+    --color-danger-border: #f87171;
+
+    /* --- Corner radius, smallest to largest --- */
+    --radius-xs: 4px;      /* inline chips and tags */
+    --radius-sm: 6px;      /* small buttons and inputs */
+    --radius-md: 8px;      /* buttons, tooltips */
+    --radius-lg: 10px;     /* notices, icon tiles */
+    --radius-xl: 12px;     /* panels inside cards */
+    --radius-card: 16px;   /* cards */
+    --radius-dialog: 20px; /* modal dialogs */
+    --radius-pill: 999px;  /* fully rounded badges */
+
+    /* --- Elevation --- */
+    --shadow-card-hover: 0 6px 18px rgba(219, 39, 119, 0.08);
+    --shadow-popover: 0 4px 12px rgba(17, 24, 39, 0.08);
+    --shadow-dialog: 0 24px 48px rgba(17, 24, 39, 0.18);
+    --focus-ring: 0 0 0 3px var(--color-accent-soft);
+
+    /* --- Motion --- */
+    --duration-fast: 0.15s;
+}

@@ -13,7 +13,7 @@
     justify-content: center;
     width: 36px;
     height: 36px;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     background: var(--color-accent-soft);
     color: var(--color-accent);
 }
@@ -48,7 +48,7 @@
     align-items: center;
     gap: 10px;
     padding: 8px 14px;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     border: 1px solid;
 }
 
@@ -58,14 +58,14 @@
 }
 
 .summary__chip--monitored {
-    background: #eef2ff;
-    border-color: #e0e7ff;
-    color: #3730a3;
+    background: var(--color-status-info-tint);
+    border-color: var(--color-status-pending-bg);
+    color: var(--color-status-pending-text);
 }
 
 .summary__chip--triggered {
-    background: #fdf2f8;
-    border-color: #fbcfe8;
+    background: var(--color-accent-tint);
+    border-color: var(--color-accent-border-soft);
     color: var(--color-accent-text);
 }
 
